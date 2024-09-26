@@ -35,6 +35,34 @@
 
 #define TIMESPEC_NSEC(ts) ((ts)->tv_sec * 1e9 + (ts)->tv_nsec)
 
+// specify architecture
+#define SYS_INTEL 1
+//#define SYS_ARMv8 0
+
+// specify caching -- for now, considers an all or none approach, but more could be supported
+//#define CACHE_NO 0
+#define CACHE_YES 1
+
+// specify whether randomness needs to be fixed or can be pulled from time
+#define RAND_TIME 1
+//#define RAND_FIXED 0
+
+// specify whether file system is available for usage
+//#define FS_NO 0
+#define FS_YES 1
+
+// specify whether there is virtual-to-physical translation
+//#define VTP_NO 0
+#define VTP_YES 1
+
+// specify the system config
+#define NUC 0
+//#define ZUBOARD 1
+
+#ifdef ZUBOARD
+#include <xil_cache.h>
+#endif
+
 //----------------------------------------------------------
 //                      Static functions
 
@@ -52,7 +80,6 @@ void clflushopt(volatile void *p)
 	asm volatile ("clflush (%0)\n"::"r" (p):"memory");
 #else
 	asm volatile ("clflushopt (%0)\n"::"r" (p):"memory");
-#
 #endif
 }
 
@@ -126,6 +153,15 @@ static inline uint64_t read_64pmccntr() {
 	asm volatile("mrs %0, PMCCNTR_EL0" : "=r" (cc));
 	return cc;
 }
+#endif
+
+#ifdef ZUBOARD
+
+void disable_caches() {
+	Xil_DCacheDisable();
+	return;
+}
+
 #endif
 
 // void set_physmap(mem_buff_t* mem);

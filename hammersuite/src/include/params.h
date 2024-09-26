@@ -22,26 +22,6 @@
 
 // Each set of defines below should have only the correct value set to 1, and all others in the set 0. This avoids issues when compiling with functions not available to certain setups.
 
-// specify architecture
-#define SYS_INTEL 1
-#define SYS_ARMv8 0
-
-// specify caching -- for now, considers an all or none approach, but more could be supported
-#define CACHE_NO 0
-#define CACHE_YES 1
-
-// specify whether randomness needs to be fixed or can be pulled from time
-#define RAND_TIME 1
-#define RAND_FIXED 0
-
-// specify whether file system is available for usage
-#define FS_NO 0
-#define FS_YES 1
-
-// specify whether there is virtual-to-physical translation
-#define VTP_NO 0
-#define VTP_YES 1
-
 typedef struct ProfileParams {
 	uint64_t g_flags 		= 0;
 	char 	*g_out_prefix;

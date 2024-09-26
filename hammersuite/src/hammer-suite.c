@@ -217,6 +217,7 @@ uint64_t hammer_it(HammerPattern* patt, MemoryBuffer* mem) {
 		v_lst[i] = phys_2_virt(dram_2_phys(patt->d_lst[i], mem), mem);
 		#elif defined VTP_NO
 		v_lst[i] = dram_2_phys(patt->d_lst[i], mem);
+		#endif
 	}
 	#ifdef FS_YES
 	sched_yield();
@@ -397,14 +398,12 @@ void init_stripe(HammerSuite * suite, uint8_t val)
 
 void init_chunk(HammerSuite * suite)
 {
-
 	if (p->vpat != (void *)NULL && p->tpat != (void *)NULL) {
 		// fprintf(stderr, "init chunk\n");
 		init_stripe(suite, (uint8_t) * p->vpat);
 		return;
 	}
 	
-
 	SessionConfig *cfg = suite->cfg;
 	switch (cfg->d_cfg) {
 	case RANDOM:
@@ -718,7 +717,6 @@ int n_sided_test(HammerSuite * suite)
 	// 	fprintf(stderr, "%p, %lx, %s  \t%lx, %p\n", v_tmp, virt_2_phys(v_tmp, mem), dAddr_2_str(d_tmp, ALL_FIELDS),
 	// 	dram_2_phys(d_tmp, mem), phys_2_virt(dram_2_phys(d_tmp, mem), mem));
 	// }
-
 	init_chunk(suite);
 	fprintf(stderr, "CL_SEED: %lx\n", CL_SEED);
 	h_patt.d_lst[0] = d_base;
@@ -984,7 +982,6 @@ void hammer_session(SessionConfig * cfg, MemoryBuffer * memory)
 			suite->hammer_test = (int (*)(void *))n_sided_test;
 		}
 	}
-
 	suite->hammer_test(suite);
 	#ifdef FS_YES
 	fclose(out_fd);

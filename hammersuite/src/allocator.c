@@ -64,12 +64,19 @@ int alloc_buffer(MemoryBuffer * mem)
 	#endif
 
 	// if (mem->flags & F_VERBOSE) {
+	#ifdef FS_YES
 		fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 		fprintf(stderr, "[ MEM ] - Buffer:      %p\n", mem->buffer);
 		fprintf(stderr, "[ MEM ] - Size:        %ld\n", alloc_size);
 		fprintf(stderr, "[ MEM ] - Alignment:   %ld\n", mem->align);
 		fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	// }
+	#elif defined FS_NO
+		fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+		fprintf(stderr, "[ MEM ] - Buffer:      %p\n", mem->buffer);
+		fprintf(stderr, "[ MEM ] - Size:        %ld\n", mem->size);
+		fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	#endif
 	return 0;
 
 }
@@ -81,5 +88,6 @@ int free_buffer(MemoryBuffer * mem)
 	return munmap(mem->buffer, mem->size);
 	#elif defined FS_NO
 	free(mem->buffer);
+	#endif
 }
 

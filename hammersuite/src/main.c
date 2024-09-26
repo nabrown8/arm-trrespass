@@ -27,9 +27,9 @@ ProfileParams *p;
 
 // DRAMLayout     g_mem_layout = {{{0x4080,0x88000,0x110000,0x220000,0x440000,0x4b300}, 6}, 0xffff80000, ((1<<13)-1)};
 // DRAMLayout 			g_mem_layout = { {{0x2040, 0x44000, 0x88000, 0x110000, 0x220000}, 5}, 0xffffc0000, ((1 << 13) - 1) };
-// DRAMLayout 			g_mem_layout = {{{0x2040,0x24000,0x48000,0x90000},4}, 0xffffe0000, ((1<<13)-1)};
+DRAMLayout 			g_mem_layout = {{{0x2040,0x24000,0x48000,0x90000},4}, 0x3fffe0000, ((1<<13)-1)};
 // DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0xffffc0000, ROW_SIZE-1};
-DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0x7ffc0000, ((1 << 13) - 1)};
+//DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0x7ffc0000, ((1 << 13) - 1)};
 
 #ifdef FS_YES
 void read_config(SessionConfig * cfg, char *f_name)
@@ -77,6 +77,10 @@ int main(int argc, char **argv)
 	enable_pmccntr();
 	#endif
 
+	#ifdef ZUBOARD
+	disable_caches();
+	#endif
+
 	p = (ProfileParams*)malloc(sizeof(ProfileParams));
 	if (p == NULL) {
 		fprintf(stderr, "[ERROR] Memory allocation\n");
@@ -100,7 +104,6 @@ int main(int argc, char **argv)
 	};
 
 	alloc_buffer(&mem);
-
 	#ifdef FS_YES
 	set_physmap(&mem);
 	gmem_dump();

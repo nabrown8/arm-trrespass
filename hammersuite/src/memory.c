@@ -90,14 +90,20 @@ physaddr_t virt_2_phys(char *v_addr, MemoryBuffer * mem)
 	// 	}
 	// }
 	// return (physaddr_t) NOT_FOUND;
+
+	#ifdef VTP_YES
 	return get_physaddr((uint64_t)v_addr, pmap_fd);
 
+	#elif defined VTP_NO
+	return *v_addr;
 	
+	#endif
 }
 
 
 char *phys_2_virt(physaddr_t p_addr, MemoryBuffer * mem)
 {
+	#ifdef VTP_YES
 	physaddr_t p_page = p_addr & ~(((uint64_t) PAGE_SIZE - 1));
 	pte_t src_pte = {.v_addr = 0,.p_addr = p_page };
 	pte_t *res_pte =
@@ -115,6 +121,12 @@ char *phys_2_virt(physaddr_t p_addr, MemoryBuffer * mem)
 			v_addr | ((uint64_t) p_addr &
 				  (((uint64_t) PAGE_SIZE - 1))));
 	// assert(false);
+
+	#elif defined VTP_NO
+
+	return (char*) p_addr;
+
+	#endif
 
     // return (char *)((physical_base & ~(((uint64_t) PAGE_SIZE - 1))) | ((uint64_t) p_addr & (((uint64_t) PAGE_SIZE - 1))));
 

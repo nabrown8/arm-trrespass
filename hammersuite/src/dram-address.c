@@ -18,8 +18,19 @@ uint64_t get_dram_row(physaddr_t p_addr)
 
 uint64_t get_dram_col(physaddr_t p_addr)
 {
+	#ifdef NUC
 	return (p_addr & g_mem_layout.
 		col_mask) >> __builtin_ctzl(g_mem_layout.col_mask);
+	#elif defined ZUBOARD
+		uint64_t col = 0;
+		uint64_t colbit = 0;
+		for (uint64_t i = 0; i < 31; i++) {
+			if ((COLMASK >> i) % 2 == 0) continue;
+			col += (((phys >> i) % 2) << colbit);
+			colbit++;
+		}
+		return col;
+	#endif
 }
 
 DRAMAddr phys_2_dram(physaddr_t p_addr)
@@ -43,6 +54,8 @@ physaddr_t dram_2_phys(DRAMAddr d_addr, MemoryBuffer *mem)
 	physaddr_t p_addr = 0;
 	uint64_t col_val = 0;
 
+	#ifdef NUC
+
 	p_addr = (d_addr.row << __builtin_ctzl(g_mem_layout.row_mask));	// set row bits
 	p_addr |= (d_addr.col << __builtin_ctzl(g_mem_layout.col_mask));	// set col bits
 
@@ -63,6 +76,26 @@ physaddr_t dram_2_phys(DRAMAddr d_addr, MemoryBuffer *mem)
 	uint64_t physical_base = virt_2_phys(mem->buffer, mem);
 
 	p_addr |= physical_base & ~(((uint64_t) PAGE_SIZE - 1));
+
+	#elif defined ZUBOARD
+
+	p_addr = (d.row << __builtin_ctzl(ROWMASK));
+	p_addr |= (get_dram_col(d.col));
+	for (int i = 0; i < g_mem_layout.h_fns.len; i++) {
+		uint64_t masked_addr = p_addr & g_mem_layout.h_fns.lst[i];
+		// if the address already respects the h_fn then just move to the next func
+		if (__builtin_parity(masked_addr) == ((d_addr.bank >> i) & 1L)) {
+			continue;
+		}
+		// else flip a bit of the address so that the address respects the dram h_fn
+		// that is get only bits not affecting the row.
+		uint64_t h_lsb = __builtin_ctzl((g_mem_layout.h_fns.lst[i]) &
+						~(g_mem_layout.col_mask) &
+						~(g_mem_layout.row_mask));
+		p_addr ^= 1 << h_lsb;
+	}
+
+	#endif
 
 
 #if DEBUG_REVERSE_FN
