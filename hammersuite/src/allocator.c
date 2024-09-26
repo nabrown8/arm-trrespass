@@ -18,7 +18,7 @@ int alloc_buffer(MemoryBuffer * mem)
 	if (mem->buffer != NULL) {
 		fprintf(stderr, "[ERROR] - Memory already allocated\n");
 	}
-
+	#ifdef FS_YES
 	if (mem->align < _SC_PAGE_SIZE) {
 		mem->align = 0;
 	}
@@ -46,10 +46,14 @@ int alloc_buffer(MemoryBuffer * mem)
 	}
 	mem->buffer = (char *)mmap(NULL, mem->size, PROT_READ | PROT_WRITE,
 				   alloc_flags, mem->fd, 0);
+	#elif defined FS_NO
+	mem->buffer = (char*) malloc(mem->size);
+	#endif
 	if (mem->buffer == MAP_FAILED) {
 		perror("[ERROR] - mmap() failed");
 		exit(1);
 	}
+	#ifdef FS_YES
 	if (mem->align) {
 		size_t error = (uint64_t) mem->buffer % mem->align;
 		size_t left = error ? mem->align - error : 0;
@@ -57,6 +61,7 @@ int alloc_buffer(MemoryBuffer * mem)
 		mem->buffer += left;
 		assert((uint64_t) mem->buffer % mem->align == 0);
 	}
+	#endif
 
 	// if (mem->flags & F_VERBOSE) {
 		fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -71,6 +76,10 @@ int alloc_buffer(MemoryBuffer * mem)
 
 int free_buffer(MemoryBuffer * mem)
 {
+	#ifdef FS_YES
 	free(mem->physmap);
 	return munmap(mem->buffer, mem->size);
+	#elif defined FS_NO
+	free(mem->buffer);
 }
+

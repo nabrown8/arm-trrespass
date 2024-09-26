@@ -31,7 +31,7 @@ ProfileParams *p;
 // DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0xffffc0000, ROW_SIZE-1};
 DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0x7ffc0000, ((1 << 13) - 1)};
 
-
+#ifdef FS_YES
 void read_config(SessionConfig * cfg, char *f_name)
 {
 	FILE *fp = fopen(f_name, "rb");
@@ -49,6 +49,7 @@ void gmem_dump()
 	FILE *fp = fopen("g_mem_dump.bin", "wb+");
 	fwrite(&g_mem_layout, sizeof(DRAMLayout), 1, fp);
 	fclose(fp);
+#endif
 
 #ifdef DEBUG
 	DRAMLayout tmp;
@@ -66,17 +67,28 @@ void gmem_dump()
 
 int main(int argc, char **argv)
 {
+	#ifdef RAND_TIME
 	srand(time(NULL));
+	#elif defined RAND_FIXED
+	srand(12345678);
+	#endif
+
+	#ifdef SYS_ARMv8
+	enable_pmccntr();
+	#endif
+
 	p = (ProfileParams*)malloc(sizeof(ProfileParams));
 	if (p == NULL) {
 		fprintf(stderr, "[ERROR] Memory allocation\n");
 		exit(1);
 	}
 
+	#ifdef FS_YES
 	if(process_argv(argc, argv, p) == -1) {
 		free(p);
 		exit(1);
 	}
+	#endif
 
 	MemoryBuffer mem = {
 		.buffer = NULL,
@@ -88,8 +100,11 @@ int main(int argc, char **argv)
 	};
 
 	alloc_buffer(&mem);
+
+	#ifdef FS_YES
 	set_physmap(&mem);
 	gmem_dump();
+	#endif 
 
 	SessionConfig s_cfg;
 	memset(&s_cfg, 0, sizeof(SessionConfig));
@@ -100,7 +115,7 @@ int main(int argc, char **argv)
 		s_cfg.h_rows = PATT_LEN;
 		s_cfg.h_rounds = p->rounds;
 		s_cfg.h_cfg = N_SIDED;
-		s_cfg.d_cfg = RANDOM;
+		s_cfg.d_cfg = ONE_TO_ZERO;
 		s_cfg.base_off = p->base_off;
 		s_cfg.aggr_n = p->aggr;
 	}
@@ -110,7 +125,8 @@ int main(int argc, char **argv)
 	} else {
 		hammer_session(&s_cfg, &mem);
 	}
-
+	#ifdef FS_YES
 	close(p->huge_fd);
+	#endif
 	return 0;
 }

@@ -32,7 +32,11 @@ RowMap gen_row_map(DRAMAddr d_src, MemoryBuffer * mem)
 
 	for (size_t col = 0; col < g_rmap_len; col++, d_src.col += (1 << 6)) {
 		dst[col].d_addr = d_src;
+		#ifdef VTP_YES
 		dst[col].v_addr = phys_2_virt(dram_2_phys(d_src, mem), mem);
+		#elif defined VTP_NO
+		dst[col].v_addr = dram_2_phys(d_src);
+		#endif
 		// fprintf(stderr, "try v_addr\n");
 		// fprintf(stderr, "bk%ld/r%ld/col%ld \t%p \t%lx\n", d_src.bank, d_src.row, d_src.col, dst[col].v_addr, dram_2_phys(d_src, mem));
 
