@@ -17,7 +17,7 @@
 #define ALLOC_SIZE     	1<<30
 #define ALIGN_std       2<<20
 #define PATT_LEN 		1024
-#define AGGR_std		10
+#define AGGR_std		9
 #define HUGE_YES
 
 typedef struct ProfileParams {

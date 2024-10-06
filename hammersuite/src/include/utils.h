@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "dram-address.h"
+
+#define NUC 0
+// #define ZUBOARD 1
+
 #define BIT_SET(x) 		(1ULL<<(x))
 #define BIT_VAL(b,val) 	(((val) >> (b)) & 1)
 #define KB(x) 			((x)<<10ULL)
@@ -35,9 +40,12 @@
 
 #define TIMESPEC_NSEC(ts) ((ts)->tv_sec * 1e9 + (ts)->tv_nsec)
 
+static physaddr_t base_phys = 0L;
+
 //----------------------------------------------------------
 //                      Static functions
 
+#ifdef NUC
 static inline __attribute__ ((always_inline))
 void clflush(volatile void *p)
 {
@@ -105,6 +113,82 @@ uint64_t realtime_now()
 	return TIMESPEC_NSEC(&now_ts);
 }
 
+#elif defined ZUBOARD
+#include <xil_cache.h>
+
+void disable_caches() {
+	Xil_DCacheDisable();
+	return;
+}
+
+static inline __attribute__ ((always_inline))
+void enable_pmccntr() {
+	asm volatile("msr PMCNTENSET_EL0, %0" : : "r" (0x8000000f));
+    asm volatile("msr PMCR_EL0, %0" : : "r" (17));
+}
+
+static inline __attribute__ ((always_inline))
+uint64_t read_64pmccntr() {
+	volatile uint64_t cc;
+	asm volatile("mrs %0, PMCCNTR_EL0" : "=r" (cc));
+	return cc;
+}
+
+static inline __attribute__ ((always_inline))
+void clflush(volatile void *p)
+{
+	return;
+}
+
+static inline __attribute__ ((always_inline))
+void clflushopt(volatile void *p)
+{
+	return;
+}
+
+static inline __attribute__ ((always_inline))
+void cpuid()
+{
+	return; // no-op
+}
+
+static inline __attribute__ ((always_inline))
+void mfence()
+{
+	asm volatile ("DSB SY");
+}
+
+static inline __attribute__ ((always_inline))
+void sfence()
+{
+	asm volatile ("DSB SY");
+}
+
+static inline __attribute__ ((always_inline))
+void lfence()
+{
+	asm volatile ("DSB SY");
+}
+
+static inline __attribute__ ((always_inline))
+uint64_t rdtscp(void)
+{
+	return read_64pmccntr();
+}
+
+static inline __attribute__ ((always_inline))
+uint64_t rdtsc(void)
+{
+	return read_64pmccntr();
+}
+
+static inline __attribute__ ((always_inline))
+uint64_t realtime_now()
+{
+	return read_64pmccntr();
+}
+#endif
+
 // void set_physmap(mem_buff_t* mem);
 
 // pte_t get_pte(char* v_addr, mem_buff_t* mem);
@@ -113,6 +197,8 @@ uint64_t realtime_now()
 
 //----------------------------------------------------------
 //                      Helpers 
+void startup();
+
 int gt(const void *a, const void *b);
 
 double mean(uint64_t * vals, size_t size);
@@ -126,3 +212,26 @@ char *int_2_bin(uint64_t val);
 char *get_rnd_addr(char *base, size_t m_size, size_t align);
 
 int get_rnd_int(int min, int max);
+
+uint64_t build_buffer(MemoryBuffer* mem);
+
+int tear_down_buff(MemoryBuffer* mem);
+
+uint64_t get_dram_col(physaddr_t p_addr, DRAMLayout g_mem_layout);
+
+physaddr_t col_2_phys(DRAMAddr d_addr, DRAMLayout g_mem_layout);
+
+void set_physmap_helper(MemoryBuffer* mem);
+
+void gmem_dump_helper(DRAMLayout g_mem_layout);
+
+uint64_t get_pfn(uint64_t entry);
+
+physaddr_t get_physaddr(uint64_t v_addr, int pmap_fd);
+
+int phys_cmp(const void *p1, const void *p2);
+
+// WARNING optimization works only with contiguous memory!!
+void set_physmap(MemoryBuffer * mem);
+
+char* phys_2_virt_helper(physaddr_t p_addr, MemoryBuffer* mem);

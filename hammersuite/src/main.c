@@ -27,9 +27,9 @@ ProfileParams *p;
 
 // DRAMLayout     g_mem_layout = {{{0x4080,0x88000,0x110000,0x220000,0x440000,0x4b300}, 6}, 0xffff80000, ((1<<13)-1)};
 // DRAMLayout 			g_mem_layout = { {{0x2040, 0x44000, 0x88000, 0x110000, 0x220000}, 5}, 0xffffc0000, ((1 << 13) - 1) };
-// DRAMLayout 			g_mem_layout = {{{0x2040,0x24000,0x48000,0x90000},4}, 0xffffe0000, ((1<<13)-1)};
+ DRAMLayout 			g_mem_layout = {{{0x2040,0x24000,0x48000,0x90000},4}, 0x3ffe0000, ((1<<13)-1)};
 // DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0xffffc0000, ROW_SIZE-1};
-DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0x7ffc0000, ((1 << 13) - 1)};
+//DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0x7ffc0000, ((1 << 13) - 1)};
 
 
 void read_config(SessionConfig * cfg, char *f_name)
@@ -44,29 +44,14 @@ void read_config(SessionConfig * cfg, char *f_name)
 	return;
 }
 
-void gmem_dump()
+void gmem_dump(DRAMLayout g_mem_layout)
 {
-	FILE *fp = fopen("g_mem_dump.bin", "wb+");
-	fwrite(&g_mem_layout, sizeof(DRAMLayout), 1, fp);
-	fclose(fp);
-
-#ifdef DEBUG
-	DRAMLayout tmp;
-	fp = fopen("g_mem_dump.bin", "rb");
-	fread(&tmp, sizeof(DRAMLayout), 1, fp);
-	fclose(fp);
-
-	assert(tmp->h_fns->len == g_mem_layout->h_fns->len);
-	assert(tmp->bank == g_mem_layout->bank);
-	assert(tmp->row == g_mem_layout->row);
-	assert(tmp->col == g_mem_layout->col);
-
-#endif
+	gmem_dump_helper(g_mem_layout);
 }
 
 int main(int argc, char **argv)
 {
-	srand(time(NULL));
+	startup();
 	p = (ProfileParams*)malloc(sizeof(ProfileParams));
 	if (p == NULL) {
 		fprintf(stderr, "[ERROR] Memory allocation\n");
@@ -89,7 +74,7 @@ int main(int argc, char **argv)
 
 	alloc_buffer(&mem);
 	set_physmap(&mem);
-	gmem_dump();
+	gmem_dump(g_mem_layout);
 
 	SessionConfig s_cfg;
 	memset(&s_cfg, 0, sizeof(SessionConfig));
@@ -100,7 +85,7 @@ int main(int argc, char **argv)
 		s_cfg.h_rows = PATT_LEN;
 		s_cfg.h_rounds = p->rounds;
 		s_cfg.h_cfg = N_SIDED;
-		s_cfg.d_cfg = RANDOM;
+		s_cfg.d_cfg = ONE_TO_ZERO;
 		s_cfg.base_off = p->base_off;
 		s_cfg.aggr_n = p->aggr;
 	}

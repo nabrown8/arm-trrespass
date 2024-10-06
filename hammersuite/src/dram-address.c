@@ -16,12 +16,6 @@ uint64_t get_dram_row(physaddr_t p_addr)
 		row_mask) >> __builtin_ctzl(g_mem_layout.row_mask);
 }
 
-uint64_t get_dram_col(physaddr_t p_addr)
-{
-	return (p_addr & g_mem_layout.
-		col_mask) >> __builtin_ctzl(g_mem_layout.col_mask);
-}
-
 DRAMAddr phys_2_dram(physaddr_t p_addr)
 {
 
@@ -33,7 +27,7 @@ DRAMAddr phys_2_dram(physaddr_t p_addr)
 	}
 
 	res.row = get_dram_row(p_addr);
-	res.col = get_dram_col(p_addr);
+	res.col = get_dram_col(p_addr, g_mem_layout);
 
 	return res;
 }
@@ -44,7 +38,7 @@ physaddr_t dram_2_phys(DRAMAddr d_addr, MemoryBuffer *mem)
 	uint64_t col_val = 0;
 
 	p_addr = (d_addr.row << __builtin_ctzl(g_mem_layout.row_mask));	// set row bits
-	p_addr |= (d_addr.col << __builtin_ctzl(g_mem_layout.col_mask));	// set col bits
+	p_addr |= col_2_phys(d_addr, g_mem_layout);
 
 	for (int i = 0; i < g_mem_layout.h_fns.len; i++) {
 		uint64_t masked_addr = p_addr & g_mem_layout.h_fns.lst[i];

@@ -66,9 +66,15 @@ char *cl_rand_gen(DRAMAddr * d_addr)
 	static uint64_t cl_buff[8];
 	for (int i = 0; i < 8; i++) {
 		cl_buff[i] =
+			#ifdef NUC
 		    __builtin_ia32_crc32di(CL_SEED,
-					   (d_addr->row + d_addr->bank +
-					    (d_addr->col + i*8)));
+				(d_addr->row + d_addr->bank +
+				(d_addr->col + i*8)));
+			#elif defined ZUBOARD
+			__builtin_aarch64_crc32b(CL_SEED,
+				(d_addr->row + d_addr->bank +
+				(d_addr->col + i*8)));
+			#endif
 	}
 	return (char *)cl_buff;
 }
