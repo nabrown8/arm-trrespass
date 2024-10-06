@@ -27,11 +27,11 @@ ProfileParams *p;
 
 // DRAMLayout     g_mem_layout = {{{0x4080,0x88000,0x110000,0x220000,0x440000,0x4b300}, 6}, 0xffff80000, ((1<<13)-1)};
 // DRAMLayout 			g_mem_layout = { {{0x2040, 0x44000, 0x88000, 0x110000, 0x220000}, 5}, 0xffffc0000, ((1 << 13) - 1) };
-DRAMLayout 			g_mem_layout = {{{0x2040,0x24000,0x48000,0x90000},4}, 0x3fffe0000, ((1<<13)-1)};
+ DRAMLayout 			g_mem_layout = {{{0x2040,0x24000,0x48000,0x90000},4}, 0x3ffe0000, ((1<<13)-1)};
 // DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0xffffc0000, ROW_SIZE-1};
 //DRAMLayout      g_mem_layout = {{{0x4080,0x48000,0x90000,0x120000,0x1b300}, 5}, 0x7ffc0000, ((1 << 13) - 1)};
 
-#ifdef FS_YES
+
 void read_config(SessionConfig * cfg, char *f_name)
 {
 	FILE *fp = fopen(f_name, "rb");
@@ -44,43 +44,14 @@ void read_config(SessionConfig * cfg, char *f_name)
 	return;
 }
 
-void gmem_dump()
+void gmem_dump(DRAMLayout g_mem_layout)
 {
-	FILE *fp = fopen("g_mem_dump.bin", "wb+");
-	fwrite(&g_mem_layout, sizeof(DRAMLayout), 1, fp);
-	fclose(fp);
-#endif
-
-#ifdef DEBUG
-	DRAMLayout tmp;
-	fp = fopen("g_mem_dump.bin", "rb");
-	fread(&tmp, sizeof(DRAMLayout), 1, fp);
-	fclose(fp);
-
-	assert(tmp->h_fns->len == g_mem_layout->h_fns->len);
-	assert(tmp->bank == g_mem_layout->bank);
-	assert(tmp->row == g_mem_layout->row);
-	assert(tmp->col == g_mem_layout->col);
-
-#endif
+	gmem_dump_helper(g_mem_layout);
 }
 
 int main(int argc, char **argv)
 {
-	#ifdef RAND_TIME
-	srand(time(NULL));
-	#elif defined RAND_FIXED
-	srand(12345678);
-	#endif
-
-	#ifdef SYS_ARMv8
-	enable_pmccntr();
-	#endif
-
-	#ifdef ZUBOARD
-	disable_caches();
-	#endif
-
+	startup();
 	p = (ProfileParams*)malloc(sizeof(ProfileParams));
 	if (p == NULL) {
 		fprintf(stderr, "[ERROR] Memory allocation\n");
@@ -104,10 +75,8 @@ int main(int argc, char **argv)
 	};
 
 	alloc_buffer(&mem);
-	#ifdef FS_YES
 	set_physmap(&mem);
-	gmem_dump();
-	#endif 
+	gmem_dump(g_mem_layout);
 
 	SessionConfig s_cfg;
 	memset(&s_cfg, 0, sizeof(SessionConfig));
@@ -128,8 +97,7 @@ int main(int argc, char **argv)
 	} else {
 		hammer_session(&s_cfg, &mem);
 	}
-	#ifdef FS_YES
+
 	close(p->huge_fd);
-	#endif
 	return 0;
 }

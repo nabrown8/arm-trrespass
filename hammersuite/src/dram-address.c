@@ -16,23 +16,6 @@ uint64_t get_dram_row(physaddr_t p_addr)
 		row_mask) >> __builtin_ctzl(g_mem_layout.row_mask);
 }
 
-uint64_t get_dram_col(physaddr_t p_addr)
-{
-	#ifdef NUC
-	return (p_addr & g_mem_layout.
-		col_mask) >> __builtin_ctzl(g_mem_layout.col_mask);
-	#elif defined ZUBOARD
-		uint64_t col = 0;
-		uint64_t colbit = 0;
-		for (uint64_t i = 0; i < 31; i++) {
-			if ((COLMASK >> i) % 2 == 0) continue;
-			col += (((phys >> i) % 2) << colbit);
-			colbit++;
-		}
-		return col;
-	#endif
-}
-
 DRAMAddr phys_2_dram(physaddr_t p_addr)
 {
 
@@ -44,7 +27,7 @@ DRAMAddr phys_2_dram(physaddr_t p_addr)
 	}
 
 	res.row = get_dram_row(p_addr);
-	res.col = get_dram_col(p_addr);
+	res.col = get_dram_col(p_addr, g_mem_layout);
 
 	return res;
 }
@@ -57,7 +40,7 @@ physaddr_t dram_2_phys(DRAMAddr d_addr, MemoryBuffer *mem)
 	#ifdef NUC
 
 	p_addr = (d_addr.row << __builtin_ctzl(g_mem_layout.row_mask));	// set row bits
-	p_addr |= (d_addr.col << __builtin_ctzl(g_mem_layout.col_mask));	// set col bits
+	p_addr |= col_2_phys(d_addr, g_mem_layout);
 
 	for (int i = 0; i < g_mem_layout.h_fns.len; i++) {
 		uint64_t masked_addr = p_addr & g_mem_layout.h_fns.lst[i];
