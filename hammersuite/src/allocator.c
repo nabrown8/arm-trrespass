@@ -22,19 +22,12 @@ int alloc_buffer(MemoryBuffer * mem)
 	uint64_t alloc_size = build_buffer(mem);
 
 	// if (mem->flags & F_VERBOSE) {
-	#ifdef FS_YES
 		fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 		fprintf(stderr, "[ MEM ] - Buffer:      %p\n", mem->buffer);
 		fprintf(stderr, "[ MEM ] - Size:        %ld\n", alloc_size);
 		fprintf(stderr, "[ MEM ] - Alignment:   %ld\n", mem->align);
 		fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	// }
-	#elif defined FS_NO
-		fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-		fprintf(stderr, "[ MEM ] - Buffer:      %p\n", mem->buffer);
-		fprintf(stderr, "[ MEM ] - Size:        %ld\n", mem->size);
-		fprintf(stderr, "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-	#endif
 	return 0;
 
 }

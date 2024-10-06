@@ -219,35 +219,17 @@ uint64_t hammer_it(HammerPattern* patt, MemoryBuffer* mem) {
 
 	char** v_lst = (char**) malloc(sizeof(char*)*patt->len);
 	for (size_t i = 0; i < patt->len; i++) {
-		#ifdef VTP_YES
 		v_lst[i] = phys_2_virt(dram_2_phys(patt->d_lst[i], mem), mem);
-		#elif defined VTP_NO
-		v_lst[i] = dram_2_phys(patt->d_lst[i], mem);
-		#endif
 	}
-	#ifdef FS_YES
 	sched_yield();
-	#endif
 	if (p->threshold > 0) {
 		uint64_t t0 = 0, t1 = 0;
 		// Threshold value depends on your system
 		while (abs((int64_t) t1 - (int64_t) t0) < p->threshold) {
-			#ifdef SYS_INTEL
 			t0 = rdtscp();
-			#elif defined SYS_ARMv8
-			t0 = read_64pmccntr();
-			#endif
 			*(volatile char *)v_lst[0];
-			#ifdef CACHE_YES
-			#ifdef SYS_INTEL
 			clflushopt(v_lst[0]);
-			#endif
-			#endif
-			#ifdef SYS_INTEL
 			t1 = rdtscp();
-			#elif defined SYS_ARMv8
-			t1 = read_64pmccntr();
-			#endif
 		}
 	}
 
@@ -259,13 +241,9 @@ uint64_t hammer_it(HammerPattern* patt, MemoryBuffer* mem) {
 		for (size_t j = 0; j < patt->len; j++) {
 			*(volatile char*) v_lst[j];
 		}
-		#ifdef CACHE_YES
-		#ifdef SYS_INTEL
 		for (size_t j = 0; j < patt->len; j++) {
 			clflushopt(v_lst[j]);
 		}
-		#endif
-		#endif
 	}
 	cl1 = realtime_now();
 
@@ -893,16 +871,9 @@ void fuzzing_session(SessionConfig * cfg, MemoryBuffer * mem)
 void hammer_session(SessionConfig * cfg, MemoryBuffer * memory)
 {
 	MemoryBuffer mem = *memory;
-
-	#ifdef VTP_YES
 	DRAMAddr d_base = phys_2_dram(virt_2_phys(mem.buffer, &mem));
-	#elif defined VTP_NO
-	DRAMAddr d_base = phys_2_dram(mem.buffer);
-	#endif
 	d_base.row += cfg->base_off;
 	fprintf(stderr, "base_v: %p, base_d: %s\n", mem.buffer, dAddr_2_str(d_base, ALL_FIELDS));
-
-	#ifdef FS_YES
 	create_dir(DATA_DIR);
 	char *out_name = (char *)malloc(500);
 	char rows_str[10];
@@ -941,14 +912,11 @@ void hammer_session(SessionConfig * cfg, MemoryBuffer * memory)
 		free(tmp_name);
 	}
 	out_fd = fopen(out_name, "w+");
-	#endif
 
 	fprintf(stderr,
 		"[LOG] - Hammer session! access pattern: %s\t data pattern: %s\n",
 		config_str[cfg->h_cfg], data_str[cfg->d_cfg]);
-	#ifdef FS_YES
 	fprintf(stderr, "[LOG] - File: %s\n", out_name);
-	#endif
 
 	HammerSuite *suite = (HammerSuite *) malloc(sizeof(HammerSuite));
 	suite->cfg = cfg;
@@ -989,9 +957,7 @@ void hammer_session(SessionConfig * cfg, MemoryBuffer * memory)
 		}
 	}
 	suite->hammer_test(suite);
-	#ifdef FS_YES
 	fclose(out_fd);
-	#endif
 	tear_down_addr_mapper(suite->mapper);
 	free(suite);
 }

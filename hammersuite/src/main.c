@@ -57,13 +57,10 @@ int main(int argc, char **argv)
 		fprintf(stderr, "[ERROR] Memory allocation\n");
 		exit(1);
 	}
-
-	#ifdef FS_YES
 	if(process_argv(argc, argv, p) == -1) {
 		free(p);
 		exit(1);
 	}
-	#endif
 
 	MemoryBuffer mem = {
 		.buffer = NULL,

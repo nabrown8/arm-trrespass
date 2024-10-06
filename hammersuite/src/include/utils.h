@@ -111,38 +111,6 @@ uint64_t realtime_now()
 	clock_gettime(CLOCK_MONOTONIC, &now_ts);
 	return TIMESPEC_NSEC(&now_ts);
 }
-#endif
-
-#ifdef SYS_ARMv8
-static inline __attribute__ ((always_inline))
-void mfence()
-{
-	asm volatile ("DSB SY");
-}
-
-static inline __attribute__ ((always_inline))
-void enable_pmccntr() {
-	asm volatile("msr PMCNTENSET_EL0, %0" : : "r" (0x8000000f));
-    asm volatile("msr PMCR_EL0, %0" : : "r" (17));
-}
-
-static inline __attribute__ ((always_inline))
-static inline uint64_t read_64pmccntr() {
-	volatile uint64_t cc;
-	asm volatile("mrs %0, PMCCNTR_EL0" : "=r" (cc));
-	return cc;
-}
-#endif
-
-#ifdef ZUBOARD
-
-void disable_caches() {
-	Xil_DCacheDisable();
-	return;
-}
-
-#endif
-
 #elif defined ZUBOARD
 #include <xil_cache.h>
 
