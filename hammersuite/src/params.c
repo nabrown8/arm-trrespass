@@ -181,13 +181,13 @@ int process_argv(int argc, char *argv[], ProfileParams *p)
 			p->aggr = atoi(optarg);
 			break;
 		case 'T':
-			if (str2pat(optarg, &(p->vpat))) {
+			if (str2pat(optarg, &(p->tpat))) {
 				fprintf(stderr, "Invalid target fill pattern: %s\n", optarg);
 				return -1;
 			}
 			break;
 		case 'V':
-			if (str2pat(optarg, &(p->tpat))) {
+			if (str2pat(optarg, &(p->vpat))) {
 				fprintf(stderr, "Invalid victim fill pattern: %s\n", optarg);
 				return -1;
 			}

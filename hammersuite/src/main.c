@@ -57,10 +57,14 @@ int main(int argc, char **argv)
 		fprintf(stderr, "[ERROR] Memory allocation\n");
 		exit(1);
 	}
+
 	if(process_argv(argc, argv, p) == -1) {
 		free(p);
 		exit(1);
 	}
+
+    // no fs on board, so can't pass args
+	manually_fill_params(p);
 
 	MemoryBuffer mem = {
 		.buffer = NULL,
@@ -84,7 +88,7 @@ int main(int argc, char **argv)
 		s_cfg.h_rows = PATT_LEN;
 		s_cfg.h_rounds = p->rounds;
 		s_cfg.h_cfg = N_SIDED;
-		s_cfg.d_cfg = ONE_TO_ZERO;
+		s_cfg.d_cfg = RANDOM;
 		s_cfg.base_off = p->base_off;
 		s_cfg.aggr_n = p->aggr;
 	}

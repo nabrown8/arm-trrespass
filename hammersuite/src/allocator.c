@@ -2,8 +2,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef NUC
 #include <sys/mman.h>
 #include <fcntl.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

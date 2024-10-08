@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "dram-address.h"
+#include "params.h"
 
 #define NUC 0
 // #define ZUBOARD 1
@@ -37,6 +38,7 @@
 
 #define NOT_FOUND 	((void*) -1)
 #define	NOT_OPENED  -1
+#define NO_FS ((FILE*) NULL)
 
 #define TIMESPEC_NSEC(ts) ((ts)->tv_sec * 1e9 + (ts)->tv_nsec)
 
@@ -110,6 +112,19 @@ uint64_t realtime_now()
 	struct timespec now_ts;
 	clock_gettime(CLOCK_MONOTONIC, &now_ts);
 	return TIMESPEC_NSEC(&now_ts);
+}
+
+static inline __attribute((always_inline))
+char *cl_rand_gen(DRAMAddr * d_addr, uint64_t CL_SEED)
+{
+	static uint64_t cl_buff[8];
+	for (int i = 0; i < 8; i++) {
+		cl_buff[i] =
+			__builtin_ia32_crc32di(CL_SEED,
+				(d_addr->row + d_addr->bank +
+				(d_addr->col + i*8)));
+	}
+	return (char *)cl_buff;
 }
 #elif defined ZUBOARD
 #include <xil_cache.h>
@@ -185,6 +200,19 @@ uint64_t realtime_now()
 {
 	return read_64pmccntr();
 }
+
+static inline __attribute((always_inline))
+char *cl_rand_gen(DRAMAddr * d_addr, uint64_t CL_SEED)
+{
+	static uint64_t cl_buff[8];
+	for (int i = 0; i < 8; i++) {
+		cl_buff[i] =
+			__builtin_aarch64_crc32b(CL_SEED,
+				(d_addr->row + d_addr->bank +
+				(d_addr->col + i*8)));
+	}
+	return (char *)cl_buff;
+}
 #endif
 
 // void set_physmap(mem_buff_t* mem);
@@ -233,3 +261,11 @@ int phys_cmp(const void *p1, const void *p2);
 void set_physmap(MemoryBuffer * mem);
 
 char* phys_2_virt_helper(physaddr_t p_addr, MemoryBuffer* mem);
+
+static inline void sched_yield_helper();
+
+void manually_fill_params(ProfileParams* p);
+
+void create_dir(const char* dir_name);
+
+void read_random(uint64_t CL_SEED);

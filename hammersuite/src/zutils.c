@@ -3,8 +3,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef NUC
 #include <sys/mman.h>
 #include <fcntl.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -154,5 +156,30 @@ void set_physmap(MemoryBuffer * mem)
 
 char* phys_2_virt_helper(physaddr_t p_addr, MemoryBuffer* mem) {
     return (char*) p_addr;
+}
+
+void sched_yield_helper() {
+	return;
+}
+
+void manually_fill_params(ProfileParams* p) {
+	p->m_size = 1 >> 30;
+	p->m_align = 0;
+	p->g_flags = F_VERBOSE;
+	p->base_off = 250;
+	p->aggr = 9;
+	p->rounds = 1000000;
+	p->fuzzing = 0;
+	p->vpat = NULL;
+	p->tpat = NULL;
+}
+
+void create_dir(const char* dir_name)
+{
+	return;
+}
+
+void read_random(uint64_t CL_SEED) {
+	return;
 }
 #endif

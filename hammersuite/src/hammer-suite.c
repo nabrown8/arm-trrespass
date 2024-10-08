@@ -9,9 +9,11 @@
 
 #include <assert.h>
 #include <sys/types.h>
+#ifdef NUC
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <fcntl.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -59,25 +61,6 @@ extern ProfileParams *p;
 int g_bk;
 FILE *out_fd            = NULL;
 static uint64_t CL_SEED = 0x7bc661612e71168c;
-
-static inline __attribute((always_inline))
-char *cl_rand_gen(DRAMAddr * d_addr)
-{
-	static uint64_t cl_buff[8];
-	for (int i = 0; i < 8; i++) {
-		cl_buff[i] =
-			#ifdef NUC
-		    __builtin_ia32_crc32di(CL_SEED,
-				(d_addr->row + d_addr->bank +
-				(d_addr->col + i*8)));
-			#elif defined ZUBOARD
-			__builtin_aarch64_crc32b(CL_SEED,
-				(d_addr->row + d_addr->bank +
-				(d_addr->col + i*8)));
-			#endif
-	}
-	return (char *)cl_buff;
-}
 
 typedef struct {
 	DRAMAddr *d_lst;
@@ -252,20 +235,20 @@ uint64_t hammer_it(HammerPattern* patt, MemoryBuffer* mem) {
 
 }
 
-void __test_fill_random(char *addr, size_t size)
-{
-	int fd;
-	if ((fd = open("/dev/urandom", O_RDONLY)) == -1) {
-		perror("[ERROR] - Unable to open /dev/urandom");
-		exit(1);
-	}
-	if (read(fd, addr, size) == -1) {
-		perror("[ERROR] - Unable to read /dev/urandom");
-		exit(1);
-	}
-	close(fd);
+// void __test_fill_random(char *addr, size_t size)
+// {
+// 	int fd;
+// 	if ((fd = open("/dev/urandom", O_RDONLY)) == -1) {
+// 		perror("[ERROR] - Unable to open /dev/urandom");
+// 		exit(1);
+// 	}
+// 	if (read(fd, addr, size) == -1) {
+// 		perror("[ERROR] - Unable to read /dev/urandom");
+// 		exit(1);
+// 	}
+// 	close(fd);
 
-}
+// }
 
 // DRAMAddr needs to be a copy in order to leave intact the original address
 void fill_stripe(DRAMAddr d_addr, uint8_t val, ADDRMapper * mapper)
@@ -310,13 +293,13 @@ void fill_row(HammerSuite *suite, DRAMAddr *d_addr, HammerData data_patt, int re
 
 void cl_rand_fill(DRAM_pte * pte)
 {
-	char *rand_data = cl_rand_gen(&pte->d_addr);
+	char *rand_data = cl_rand_gen(&pte->d_addr, CL_SEED);
 	memcpy(pte->v_addr, rand_data, CL_SIZE);
 }
 
 uint64_t cl_rand_comp(DRAM_pte * pte)
 {
-	char *rand_data = cl_rand_gen(&pte->d_addr);
+	char *rand_data = cl_rand_gen(&pte->d_addr, CL_SEED);
 	uint64_t res = 0;
 	for (int i = 0; i < CL_SIZE; i++) {
 		if (*(pte->v_addr + i) != rand_data[i]) {
@@ -328,19 +311,7 @@ uint64_t cl_rand_comp(DRAM_pte * pte)
 
 void init_random(HammerSuite * suite)
 {
-	int fd;
-	if ((fd = open("/dev/urandom", O_RDONLY)) == -1) {
-		perror("[ERROR] - Unable to open /dev/urandom");
-		exit(1);
-	}
-	if (CL_SEED == 0) {
-		if (read(fd, &CL_SEED, sizeof(CL_SEED)) == -1) {
-			perror("[ERROR] - Unable to read /dev/urandom");
-			exit(1);
-		}
-	}
-	fprintf(stderr,"#seed: %lx\n", CL_SEED);
-	close(fd);
+    read_random(CL_SEED);
 	ADDRMapper *mapper = suite->mapper;
 	DRAMAddr d_tmp;
 	for (size_t bk = 0; bk < get_banks_cnt(); bk++) {
@@ -426,7 +397,7 @@ void scan_random(HammerSuite * suite, HammerPattern * h_patt, size_t adj_rows)
 			cpuid();
 			uint64_t res = cl_rand_comp(&pte);
 			if (res) {
-				char *rand_data = cl_rand_gen(&pte.d_addr);
+				char *rand_data = cl_rand_gen(&pte.d_addr, CL_SEED);
 				for (int off = 0; off < CL_SIZE; off++) {
 					if (!((res >> off) & 1))
 						continue;
@@ -806,14 +777,6 @@ void fuzz(HammerSuite *suite, int d, int v)
 	free(h_patt.d_lst);
 }
 
-void create_dir(const char* dir_name)
-{
-	struct stat st = {0};
-	if (stat(dir_name, &st) == -1) {
-			mkdir(dir_name, 0777);
-	}
-}
-
 void fuzzing_session(SessionConfig * cfg, MemoryBuffer * mem)
 {
 	int d, v, aggrs;
@@ -823,6 +786,7 @@ void fuzzing_session(SessionConfig * cfg, MemoryBuffer * mem)
 	fprintf(stdout, "[INFO] d_base.row:%lu\n", d_base.row);
 
 	/* Init FILES */
+	#ifdef NUC
 	create_dir(DATA_DIR);
 	char *out_name = (char *)malloc(500);
 	char rows_str[10];
@@ -852,6 +816,7 @@ void fuzzing_session(SessionConfig * cfg, MemoryBuffer * mem)
 	}
 	out_fd = fopen(out_name, "w+");
 	assert(out_fd != NULL);
+	#endif
 
 	HammerSuite *suite = (HammerSuite *) malloc(sizeof(HammerSuite));
 	suite->mem = mem;
@@ -874,6 +839,7 @@ void hammer_session(SessionConfig * cfg, MemoryBuffer * memory)
 	DRAMAddr d_base = phys_2_dram(virt_2_phys(mem.buffer, &mem));
 	d_base.row += cfg->base_off;
 	fprintf(stderr, "base_v: %p, base_d: %s\n", mem.buffer, dAddr_2_str(d_base, ALL_FIELDS));
+	#ifdef NUC
 	create_dir(DATA_DIR);
 	char *out_name = (char *)malloc(500);
 	char rows_str[10];
@@ -912,6 +878,7 @@ void hammer_session(SessionConfig * cfg, MemoryBuffer * memory)
 		free(tmp_name);
 	}
 	out_fd = fopen(out_name, "w+");
+	#endif
 
 	fprintf(stderr,
 		"[LOG] - Hammer session! access pattern: %s\t data pattern: %s\n",

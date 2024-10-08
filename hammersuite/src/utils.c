@@ -2,8 +2,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef NUC
 #include <sys/mman.h>
+#include <sched.h>
 #include <fcntl.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -242,4 +245,37 @@ char* phys_2_virt_helper(physaddr_t p_addr, MemoryBuffer* mem) {
 	// assert(false);
 
     // return (char *)((physical_base & ~(((uint64_t) PAGE_SIZE - 1))) | ((uint64_t) p_addr & (((uint64_t) PAGE_SIZE - 1))));
+}
+
+void sched_yield_helper() {
+	sched_yield();
+}
+
+void manually_fill_params(ProfileParams* p) {
+	return;
+}
+
+void create_dir(const char* dir_name)
+{
+	struct stat st = {0};
+	if (stat(dir_name, &st) == -1) {
+			mkdir(dir_name, 0777);
+	}
+	return;
+}
+
+void read_random(uint64_t CL_SEED) {
+	int fd;
+	if ((fd = open("/dev/urandom", O_RDONLY)) == -1) {
+		perror("[ERROR] - Unable to open /dev/urandom");
+		exit(1);
+	}
+	if (CL_SEED == 0) {
+		if (read(fd, &CL_SEED, sizeof(CL_SEED)) == -1) {
+			perror("[ERROR] - Unable to read /dev/urandom");
+			exit(1);
+		}
+	}
+	fprintf(stderr,"#seed: %lx\n", CL_SEED);
+	close(fd);
 }
