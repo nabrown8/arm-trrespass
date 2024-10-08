@@ -117,14 +117,15 @@ uint64_t get_dram_col(physaddr_t p_addr, DRAMLayout g_mem_layout)
 
 physaddr_t col_2_phys(DRAMAddr d_addr, DRAMLayout g_mem_layout) {
 	physaddr_t phys = 0;
+	uint64_t col = d_addr.col;
 	int colbit = 0;
 	for (int i = 0; i < 31; i++) {
 		if ((g_mem_layout.col_mask >> i) % 2 == 0) continue;
-		colbit = d_addr % 2;
+		colbit = col % 2;
 		if (colbit) {
 			phys |= (1 << i);
 		}
-		d_addr >>= 1;
+		col >>= 1;
 	}
 	return phys;
 }
@@ -163,7 +164,7 @@ void sched_yield_helper() {
 }
 
 void manually_fill_params(ProfileParams* p) {
-	p->m_size = 1 >> 30;
+	p->m_size = 1000000000;
 	p->m_align = 0;
 	p->g_flags = F_VERBOSE;
 	p->base_off = 250;
@@ -181,5 +182,9 @@ void create_dir(const char* dir_name)
 
 void read_random(uint64_t CL_SEED) {
 	return;
+}
+
+int open_hugetlb(ProfileParams* p) {
+	return 0;
 }
 #endif

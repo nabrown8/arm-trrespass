@@ -209,10 +209,7 @@ int process_argv(int argc, char *argv[], ProfileParams *p)
 #endif
 
 	if (p->g_flags & (F_ALLOC_HUGE_2M | F_ALLOC_HUGE_1G)) {
-		if ((p->huge_fd = open(p->huge_file, O_CREAT | O_RDWR, 0755)) == -1) {
-			perror("[ERROR] - Unable to open hugetlbfs");
-			return -1;
-		}
+		return open_hugetlb(p);
 	}
 	return 0;
 }

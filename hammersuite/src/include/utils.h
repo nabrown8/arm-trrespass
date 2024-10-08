@@ -129,7 +129,7 @@ char *cl_rand_gen(DRAMAddr * d_addr, uint64_t CL_SEED)
 #elif defined ZUBOARD
 #include <xil_cache.h>
 
-void disable_caches() {
+static void disable_caches() {
 	Xil_DCacheDisable();
 	return;
 }
@@ -262,10 +262,12 @@ void set_physmap(MemoryBuffer * mem);
 
 char* phys_2_virt_helper(physaddr_t p_addr, MemoryBuffer* mem);
 
-static inline void sched_yield_helper();
+void sched_yield_helper();
 
 void manually_fill_params(ProfileParams* p);
 
 void create_dir(const char* dir_name);
 
 void read_random(uint64_t CL_SEED);
+
+int open_hugetlb(ProfileParams* p);

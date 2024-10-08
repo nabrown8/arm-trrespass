@@ -279,3 +279,11 @@ void read_random(uint64_t CL_SEED) {
 	fprintf(stderr,"#seed: %lx\n", CL_SEED);
 	close(fd);
 }
+
+int open_hugetlb(ProfileParams* p) {
+	if ((p->huge_fd = open(p->huge_file, O_CREAT | O_RDWR, 0755)) == -1) {
+		perror("[ERROR] - Unable to open hugetlbfs");
+		return -1;
+	}
+	return 0;
+}

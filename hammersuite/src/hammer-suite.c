@@ -204,7 +204,7 @@ uint64_t hammer_it(HammerPattern* patt, MemoryBuffer* mem) {
 	for (size_t i = 0; i < patt->len; i++) {
 		v_lst[i] = phys_2_virt(dram_2_phys(patt->d_lst[i], mem), mem);
 	}
-	sched_yield();
+	sched_yield_helper();
 	if (p->threshold > 0) {
 		uint64_t t0 = 0, t1 = 0;
 		// Threshold value depends on your system
@@ -705,6 +705,7 @@ int n_sided_test(HammerSuite * suite)
 
 			uint64_t time = hammer_it(&h_patt, mem);
 			fprintf(stderr, "%ld ", time);
+			fflush(stderr);
 
 			scan_rows(suite, &h_patt, 0);
 			for (int idx = 0; idx<h_patt.len; idx++) {
@@ -878,12 +879,12 @@ void hammer_session(SessionConfig * cfg, MemoryBuffer * memory)
 		free(tmp_name);
 	}
 	out_fd = fopen(out_name, "w+");
+	fprintf(stderr, "[LOG] - File: %s\n", out_name);
 	#endif
 
 	fprintf(stderr,
 		"[LOG] - Hammer session! access pattern: %s\t data pattern: %s\n",
 		config_str[cfg->h_cfg], data_str[cfg->d_cfg]);
-	fprintf(stderr, "[LOG] - File: %s\n", out_name);
 
 	HammerSuite *suite = (HammerSuite *) malloc(sizeof(HammerSuite));
 	suite->cfg = cfg;
