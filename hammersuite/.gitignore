@@ -1,1 +1,5 @@
 *.log
+data
+obj
+src/.obj
+g_mem_dump.bin
