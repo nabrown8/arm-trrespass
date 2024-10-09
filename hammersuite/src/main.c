@@ -23,6 +23,12 @@
 #include "include/hammer-suite.h"
 #include "include/params.h"
 
+#ifdef NUC
+#include "utils-intel.h"
+#elif defined ZUBOARD
+#include "utils-arm.h"
+#endif
+
 ProfileParams *p;
 
 // DRAMLayout     g_mem_layout = {{{0x4080,0x88000,0x110000,0x220000,0x440000,0x4b300}, 6}, 0xffff80000, ((1<<13)-1)};

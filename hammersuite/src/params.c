@@ -29,6 +29,12 @@
 #include <errno.h>
 #include <getopt.h>
 
+#ifdef NUC
+#include "utils-intel.h"
+#elif defined ZUBOARD
+#include "utils-arm.h"
+#endif
+
 void print_usage(char *bin_name)
 {
 	fprintf(stderr,

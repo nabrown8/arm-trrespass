@@ -14,6 +14,12 @@
 #include <errno.h>
 #include <string.h>
 
+#ifdef NUC
+#include "utils-intel.h"
+#elif defined ZUBOARD
+#include "utils-arm.h"
+#endif
+
 #define DEF_RNG_LEN (8<<10)
 #define DEBUG
 #define DEBUG_LINE fprintf(stderr, "[DEBUG] - GOT HERE\n");

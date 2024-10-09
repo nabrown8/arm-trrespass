@@ -6,6 +6,12 @@
 #include "utils.h"
 #include "memory.h"
 
+#ifdef NUC
+#include "utils-intel.h"
+#elif defined ZUBOARD
+#include "utils-arm.h"
+#endif
+
 #define DEBUG_REVERSE_FN 1
 
 extern DRAMLayout g_mem_layout;

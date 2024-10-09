@@ -23,6 +23,12 @@
 #include <limits.h>
 #include <math.h>
 
+#ifdef NUC
+#include "utils-intel.h"
+#elif defined ZUBOARD
+#include "utils-arm.h"
+#endif
+
 #define REFRESH_VAL "stdrefi"
 #define OUT_HEAD "f_og, f_new, vict_addr, aggr_addr\n"
 

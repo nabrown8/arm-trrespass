@@ -15,6 +15,12 @@
 
 #include "utils.h"
 
+#ifdef NUC
+#include "utils-intel.h"
+#elif defined ZUBOARD
+#include "utils-arm.h"
+#endif
+
 int alloc_buffer(MemoryBuffer * mem)
 {
 	if (mem->buffer != NULL) {
