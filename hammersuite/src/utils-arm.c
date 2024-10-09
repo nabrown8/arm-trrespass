@@ -14,7 +14,7 @@
 #define PAGE_BITS 12
 
 #define FLAGS (MAP_PRIVATE | MAP_POPULATE | MAP_HUGETLB | (30<<MAP_HUGE_SHIFT))
-\/**
+/**
 Inputs: None
 
 Makes the calls to cache maintenance/random seeding/etc. that will be used during the runtime.
